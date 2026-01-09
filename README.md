@@ -36,13 +36,6 @@ A complete RESTful API backend for a gym workout tracking application built with
 
 ## API Endpoints
 
-### Authentication
-
-| Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|---------------|
-| POST | `/api/auth/register` | Register new user | No |
-| POST | `/api/auth/login` | User login | No |
-| GET | `/api/auth/profile` | Get user profile | Yes |
 | PUT | `/api/auth/profile` | Update user profile | Yes |
 | POST | `/api/auth/change-password` | Change password | Yes |
 
@@ -107,38 +100,6 @@ POST /api/auth/register
   "name": "John Doe",
   "email": "john@example.com",
   "password": "securepassword"
-}
-```
-
-### Create Exercise
-```json
-POST /api/exercises
-Content-Type: multipart/form-data
-
-{
-  "name": "Bench Press",
-  "description": "Chest exercise",
-  "muscle_group": "Chest",
-  "has_pulley": false,
-  "is_unilateral": false,
-  "bar_weight": 20,
-  "image": [file]
-}
-```
-
-### Start Workout Session
-```json
-POST /api/workout-sessions
-{
-  "workout_id": 1,
-  "notes": "Morning workout"
-}
-```
-
-### Add Set to Session
-```json
-POST /api/workout-sessions/1/sets
-{
   "exercise_id": 1,
   "number_of_set": 1,
   "sets": 3,

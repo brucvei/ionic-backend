@@ -86,5 +86,13 @@ function onListening() {
   var bind = typeof addr === 'string'
     ? 'pipe ' + addr
     : 'port ' + addr.port;
+
+  console.log('🚀 Server is running!');
+  console.log('📍 Environment:', process.env.NODE_ENV || 'development');
+  console.log('🌐 Port:', port);
+  console.log('🔗 Health check: /health');
+  console.log('🧪 CORS test: /cors-test');
+  console.log('📚 API base: /api');
+
   debug('Listening on ' + bind);
 }

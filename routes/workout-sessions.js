@@ -135,11 +135,28 @@ router.post('/:id/sets', authenticateToken, async (req, res) => {
   try {
     const { exercise_id, number_of_set, sets, series_type, weight, reps } = req.body;
 
+    // Validações
+    if (!exercise_id || !number_of_set || !weight || !reps) {
+      return res.status(400).json({ error: 'exercise_id, number_of_set, weight and reps are required' });
+    }
+
+    if (![0, 1, 2, 3].includes(parseInt(series_type))) {
+      return res.status(400).json({ error: 'series_type must be 0 (warm-up), 1 (prep), 2 (working), or 3 (back-off)' });
+    }
+
+    if (parseInt(weight) <= 0 || parseInt(reps) <= 0) {
+      return res.status(400).json({ error: 'weight and reps must be positive numbers' });
+    }
+
+    if (parseInt(number_of_set) > 8) {
+      return res.status(400).json({ error: 'Maximum 8 sets allowed per exercise' });
+    }
+
     const setData = {
       id_workout_session: req.params.id,
       id_exercise: exercise_id,
-      number_of_set,
-      sets,
+      number_of_set: parseInt(number_of_set),
+      sets: parseInt(sets) || 1,
       series_type: parseInt(series_type) || 0, // 0: aquecimento, 1: preparatória, 2: working set, 3: back off set
       weight: parseInt(weight),
       reps: parseInt(reps)
@@ -197,6 +214,64 @@ router.get('/progress/:exerciseId', authenticateToken, async (req, res) => {
     res.json({ progress });
   } catch (error) {
     console.error('Get exercise progress error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Delete workout session
+router.delete('/:id', authenticateToken, async (req, res) => {
+  try {
+    const session = await workoutSessionModel.delete(req.params.id, req.user.userId);
+
+    if (!session) {
+      return res.status(404).json({ error: 'Workout session not found' });
+    }
+
+    res.json({ message: 'Workout session deleted successfully' });
+  } catch (error) {
+    console.error('Delete workout session error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Remove exercise from session
+router.delete('/:sessionId/exercises/:exerciseId', authenticateToken, async (req, res) => {
+  try {
+    const result = await workoutSessionModel.removeExercise(
+      req.params.sessionId,
+      req.params.exerciseId,
+      req.user.userId
+    );
+
+    if (!result) {
+      return res.status(404).json({ error: 'Exercise not found in session' });
+    }
+
+    res.json({ message: 'Exercise removed from session successfully' });
+  } catch (error) {
+    console.error('Remove exercise from session error:', error);
+    if (error.message === 'Session not found') {
+      return res.status(404).json({ error: error.message });
+    }
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Delete specific set
+router.delete('/sets/:setId', authenticateToken, async (req, res) => {
+  try {
+    const result = await workoutSessionModel.deleteSet(req.params.setId, req.user.userId);
+
+    if (!result) {
+      return res.status(404).json({ error: 'Set not found' });
+    }
+
+    res.json({ message: 'Set deleted successfully' });
+  } catch (error) {
+    console.error('Delete set error:', error);
+    if (error.message === 'Set not found or access denied') {
+      return res.status(404).json({ error: error.message });
+    }
     res.status(500).json({ error: 'Internal server error' });
   }
 });

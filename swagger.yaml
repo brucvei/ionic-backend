@@ -335,6 +335,71 @@ components:
           example: "Error message description"
 
 paths:
+  /health:
+    get:
+      tags:
+        - System
+      summary: Health check endpoint
+      description: Check if the API is running and get basic system information
+      responses:
+        '200':
+          description: System is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "OK"
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: "2024-01-09T10:30:00.000Z"
+                  cors:
+                    type: string
+                    example: "enabled"
+                  origin:
+                    type: string
+                    example: "http://localhost:4200"
+
+  /cors-test:
+    get:
+      tags:
+        - System
+      summary: CORS test endpoint
+      description: Test CORS configuration and get request information
+      responses:
+        '200':
+          description: CORS test successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "CORS is working!"
+                  origin:
+                    type: string
+                    example: "http://localhost:4200"
+                  method:
+                    type: string
+                    example: "GET"
+                  headers:
+                    type: object
+                    properties:
+                      user-agent:
+                        type: string
+                        example: "Mozilla/5.0..."
+                      authorization:
+                        type: string
+                        example: "present"
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: "2024-01-09T10:30:00.000Z"
+
   /api/auth/register:
     post:
       tags:
@@ -1813,6 +1878,8 @@ paths:
                               format: float
 
 tags:
+  - name: System
+    description: System health and CORS testing endpoints
   - name: Authentication
     description: User authentication and profile management
   - name: Exercises

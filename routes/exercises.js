@@ -71,14 +71,28 @@ router.post('/', authenticateToken, upload.single('image'), async (req, res) => 
   try {
     const { name, description, has_pulley, is_unilateral, bar_weight, muscle_group } = req.body;
 
+    // Validações
+    if (!name || !muscle_group) {
+      return res.status(400).json({ error: 'Name and muscle_group are required' });
+    }
+
+    if (bar_weight && ![6, 8, 10, 12, 20].includes(parseInt(bar_weight))) {
+      return res.status(400).json({ error: 'Bar weight must be 6, 8, 10, 12, or 20 kg' });
+    }
+
+    // Validar conflitos de equipamento
+    if (has_pulley === 'true' && bar_weight) {
+      return res.status(400).json({ error: 'Exercise cannot have both pulley and bar weight' });
+    }
+
     const exerciseData = {
       id_user: req.user.userId,
-      name,
-      description,
+      name: name.trim(),
+      description: description?.trim() || null,
       has_pulley: has_pulley === 'true',
       is_unilateral: is_unilateral === 'true',
       bar_weight: bar_weight ? parseInt(bar_weight) : null,
-      muscle_group,
+      muscle_group: muscle_group.trim(),
       image_url: req.file ? `/images/exercises/${req.file.filename}` : null
     };
 
@@ -136,6 +150,114 @@ router.delete('/:id', authenticateToken, async (req, res) => {
     res.json({ message: 'Exercise deleted successfully' });
   } catch (error) {
     console.error('Delete exercise error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Calculate actual weight based on equipment configuration
+router.post('/:id/calculate-weight', authenticateToken, async (req, res) => {
+  try {
+    const { input_weight } = req.body;
+
+    if (!input_weight || input_weight <= 0) {
+      return res.status(400).json({ error: 'Valid input_weight is required' });
+    }
+
+    const exercise = await exerciseModel.findById(req.params.id, req.user.userId);
+    if (!exercise) {
+      return res.status(404).json({ error: 'Exercise not found' });
+    }
+
+    let actualWeight = input_weight;
+
+    // Se tem polia, divide por 2
+    if (exercise.has_pulley) {
+      actualWeight = actualWeight / 2;
+    }
+
+    // Se tem barra, multiplica por 2 (peso dos dois lados) e soma peso da barra
+    if (exercise.bar_weight) {
+      actualWeight = (input_weight * 2) + exercise.bar_weight;
+    }
+
+    // Se é unilateral mas o usuário quer saber o bilateral
+    let bilateralWeight = actualWeight;
+    if (exercise.is_unilateral && !exercise.has_pulley && !exercise.bar_weight) {
+      bilateralWeight = actualWeight * 2;
+    }
+
+    res.json({
+      exercise_name: exercise.name,
+      input_weight: input_weight,
+      actual_weight: actualWeight,
+      bilateral_weight: bilateralWeight,
+      calculation_info: {
+        has_pulley: exercise.has_pulley,
+        is_unilateral: exercise.is_unilateral,
+        bar_weight: exercise.bar_weight,
+        description: getWeightCalculationDescription(exercise)
+      }
+    });
+  } catch (error) {
+    console.error('Calculate weight error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Helper function for weight calculation description
+function getWeightCalculationDescription(exercise) {
+  const descriptions = [];
+
+  if (exercise.bar_weight) {
+    descriptions.push(`Bar weight: ${exercise.bar_weight}kg`);
+    descriptions.push('Formula: (input × 2) + bar weight');
+  }
+
+  if (exercise.has_pulley) {
+    descriptions.push('Has pulley: input ÷ 2');
+  }
+
+  if (exercise.is_unilateral) {
+    descriptions.push('Unilateral: weight per side');
+  } else {
+    descriptions.push('Bilateral: total weight');
+  }
+
+  return descriptions.join(' | ');
+}
+
+// Update exercise equipment configuration (for use during workout)
+router.patch('/:id/equipment', authenticateToken, async (req, res) => {
+  try {
+    const { has_pulley, is_unilateral, bar_weight } = req.body;
+
+    // Validações
+    if (bar_weight && ![6, 8, 10, 12, 20].includes(parseInt(bar_weight))) {
+      return res.status(400).json({ error: 'Bar weight must be 6, 8, 10, 12, or 20 kg' });
+    }
+
+    if (has_pulley && bar_weight) {
+      return res.status(400).json({ error: 'Exercise cannot have both pulley and bar weight' });
+    }
+
+    const equipmentData = {};
+    if (has_pulley !== undefined) equipmentData.has_pulley = has_pulley;
+    if (is_unilateral !== undefined) equipmentData.is_unilateral = is_unilateral;
+    if (bar_weight !== undefined) equipmentData.bar_weight = bar_weight ? parseInt(bar_weight) : null;
+
+    const exercise = await exerciseModel.update(req.params.id, req.user.userId, equipmentData);
+
+    if (!exercise) {
+      return res.status(404).json({ error: 'Exercise not found' });
+    }
+
+    res.json({
+      message: 'Exercise equipment configuration updated successfully',
+      exercise,
+      calculation_info: getWeightCalculationDescription(exercise)
+    });
+  } catch (error) {
+    console.error('Update exercise equipment error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

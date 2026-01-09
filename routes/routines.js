@@ -63,10 +63,23 @@ router.post('/', authenticateToken, upload.single('image'), async (req, res) => 
   try {
     const { name, description } = req.body;
 
+    // Validações
+    if (!name || name.trim().length === 0) {
+      return res.status(400).json({ error: 'Routine name is required' });
+    }
+
+    // Verificar limite de rotinas por usuário (máximo 3 conforme requisito)
+    const existingRoutines = await routineModel.findByUserId(req.user.userId);
+    if (existingRoutines.length >= 3) {
+      return res.status(400).json({
+        error: 'Maximum of 3 routines allowed per user. Delete an existing routine first.'
+      });
+    }
+
     const routineData = {
       id_user: req.user.userId,
-      name,
-      description,
+      name: name.trim(),
+      description: description?.trim() || null,
       image_url: req.file ? `/images/routines/${req.file.filename}` : null
     };
 
@@ -128,6 +141,23 @@ router.delete('/:id', authenticateToken, async (req, res) => {
 router.post('/:id/workouts', authenticateToken, async (req, res) => {
   try {
     const { workout_id, number } = req.body;
+
+    // Validações
+    if (!workout_id || !number) {
+      return res.status(400).json({ error: 'workout_id and number are required' });
+    }
+
+    // Verificar limite de workouts por rotina (máximo 6 conforme requisito)
+    const routine = await routineModel.findWithWorkouts(req.params.id, req.user.userId);
+    if (!routine) {
+      return res.status(404).json({ error: 'Routine not found' });
+    }
+
+    if (routine.workouts && routine.workouts.length >= 6) {
+      return res.status(400).json({
+        error: 'Maximum of 6 workouts allowed per routine'
+      });
+    }
 
     const routineWorkout = await routineModel.addWorkout(
       req.params.id,

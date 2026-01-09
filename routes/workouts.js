@@ -129,11 +129,28 @@ router.post('/:id/exercises', authenticateToken, async (req, res) => {
   try {
     const { exercise_id, sets, number } = req.body;
 
+    // Validações
+    if (!exercise_id || !sets || !number) {
+      return res.status(400).json({ error: 'exercise_id, sets, and number are required' });
+    }
+
+    // Verificar limite de exercícios por workout (máximo 10 conforme requisito)
+    const workout = await workoutModel.findWithExercises(req.params.id, req.user.userId);
+    if (!workout) {
+      return res.status(404).json({ error: 'Workout not found' });
+    }
+
+    if (workout.exercises && workout.exercises.length >= 10) {
+      return res.status(400).json({
+        error: 'Maximum of 10 exercises allowed per workout'
+      });
+    }
+
     const workoutExercise = await workoutModel.addExercise(
       req.params.id,
       exercise_id,
-      sets,
-      number,
+      parseInt(sets),
+      parseInt(number),
       req.user.userId
     );
 

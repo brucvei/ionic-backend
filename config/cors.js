@@ -26,6 +26,12 @@ const allowedOrigins = {
 
 // Function to check if origin is allowed
 const isOriginAllowed = (origin) => {
+  // Em desenvolvimento ou para debug, permitir todas as origens
+  console.log('🌐 CORS check - Origin:', origin);
+  return true; // Allow all origins for now
+
+  // Código original comentado para debug:
+  /*
   if (!origin) return true; // Allow requests with no origin
 
   // Allow any localhost/127.0.0.1 origin for development
@@ -40,11 +46,19 @@ const isOriginAllowed = (origin) => {
   ];
 
   return allAllowed.includes(origin);
+  */
 };
 
 // CORS configuration object
 const corsConfig = {
   origin: function (origin, callback) {
+    console.log('🌐 CORS origin check:', origin);
+
+    // Allow all origins for debugging
+    return callback(null, true);
+
+    // Código original comentado:
+    /*
     if (isOriginAllowed(origin)) {
       return callback(null, true);
     }
@@ -52,6 +66,7 @@ const corsConfig = {
     const msg = `CORS policy: Origin ${origin} is not allowed`;
     console.warn(`🚫 CORS blocked: ${origin}`);
     return callback(new Error(msg), false);
+    */
   },
   credentials: true,
   optionsSuccessStatus: 200,
