@@ -94,8 +94,8 @@ app.use(function(err, req, res, next) {
 
   // API error responses
   if (req.path.startsWith('/api/')) {
-    return res.status(err.status || 500).json({ 
-      error: err.message || 'Internal server error' 
+    return res.status(err.status || 500).json({
+      error: err.message || 'Internal server error'
     });
   }
 
