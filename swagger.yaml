@@ -1,0 +1,1827 @@
+openapi: 3.0.0
+info:
+  title: Workout Management API
+  description: A complete RESTful API backend for a gym workout tracking application built with Node.js, Express, and PostgreSQL.
+  version: 1.0.0
+  contact:
+    email: support@workoutapi.com
+
+servers:
+  - url: http://localhost:3000
+    description: Local development server
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "John Doe"
+        email:
+          type: string
+          format: email
+          example: "john@example.com"
+        image_url:
+          type: string
+          nullable: true
+          example: "/images/users/profile.jpg"
+        created_at:
+          type: string
+          format: date-time
+
+    Exercise:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        id_user:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "Bench Press"
+        description:
+          type: string
+          nullable: true
+          example: "Chest exercise"
+        image_url:
+          type: string
+          nullable: true
+          example: "/images/exercises/bench-press.jpg"
+        has_pulley:
+          type: boolean
+          default: false
+        is_unilateral:
+          type: boolean
+          default: false
+        bar_weight:
+          type: integer
+          nullable: true
+          enum: [6, 8, 10, 12, 20]
+          example: 20
+        muscle_group:
+          type: string
+          example: "Chest"
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Workout:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        id_user:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "Push Day"
+        description:
+          type: string
+          nullable: true
+          example: "Chest, shoulders and triceps"
+        image_url:
+          type: string
+          nullable: true
+          example: "/images/workouts/push-day.jpg"
+        exercises:
+          type: array
+          items:
+            $ref: '#/components/schemas/WorkoutExercise'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    WorkoutExercise:
+      type: object
+      properties:
+        id:
+          type: integer
+        id_exercise:
+          type: integer
+        sets:
+          type: integer
+          example: 3
+        number:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "Bench Press"
+        muscle_group:
+          type: string
+          example: "Chest"
+
+    Routine:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        id_user:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "PPL Split"
+        description:
+          type: string
+          nullable: true
+          example: "Push Pull Legs routine"
+        image_url:
+          type: string
+          nullable: true
+          example: "/images/routines/ppl.jpg"
+        workouts:
+          type: array
+          items:
+            $ref: '#/components/schemas/RoutineWorkout'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    RoutineWorkout:
+      type: object
+      properties:
+        id:
+          type: integer
+        id_workout:
+          type: integer
+        number:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "Push Day"
+        description:
+          type: string
+          nullable: true
+
+    WorkoutSession:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        id_user:
+          type: integer
+          example: 1
+        id_workout:
+          type: integer
+          example: 1
+        start_time:
+          type: string
+          format: date-time
+        end_time:
+          type: string
+          format: date-time
+          nullable: true
+        total_volume:
+          type: integer
+          example: 5000
+        notes:
+          type: string
+          nullable: true
+          example: "Good workout today"
+        workout_name:
+          type: string
+          example: "Push Day"
+        exercises:
+          type: array
+          items:
+            $ref: '#/components/schemas/SessionExercise'
+        sets:
+          type: array
+          items:
+            $ref: '#/components/schemas/SessionSet'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    SessionExercise:
+      type: object
+      properties:
+        id:
+          type: integer
+        id_exercise:
+          type: integer
+        number:
+          type: integer
+          example: 1
+        observations:
+          type: string
+          nullable: true
+          example: "Felt heavy today"
+        name:
+          type: string
+          example: "Bench Press"
+        muscle_group:
+          type: string
+          example: "Chest"
+
+    SessionSet:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        id_workout_session:
+          type: integer
+          example: 1
+        id_exercise:
+          type: integer
+          example: 1
+        number_of_set:
+          type: integer
+          example: 1
+        sets:
+          type: integer
+          example: 1
+        series_type:
+          type: integer
+          enum: [0, 1, 2, 3]
+          example: 2
+          description: "0: Warm-up, 1: Preparatory, 2: Working set, 3: Back off set"
+        weight:
+          type: integer
+          example: 80
+        reps:
+          type: integer
+          example: 10
+        done:
+          type: boolean
+          default: false
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Statistics:
+      type: object
+      properties:
+        total_workouts:
+          type: integer
+          example: 50
+        weekly_volume:
+          type: integer
+          example: 15000
+        monthly_volume:
+          type: integer
+          example: 60000
+        avg_duration_minutes:
+          type: number
+          format: float
+          example: 75.5
+        weekly_workouts:
+          type: integer
+          example: 3
+        top_exercises:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              muscle_group:
+                type: string
+              usage_count:
+                type: integer
+        recent_sessions:
+          type: array
+          items:
+            $ref: '#/components/schemas/WorkoutSession'
+        muscle_group_stats:
+          type: array
+          items:
+            type: object
+            properties:
+              muscle_group:
+                type: string
+              exercise_count:
+                type: integer
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "Error message description"
+
+paths:
+  /api/auth/register:
+    post:
+      tags:
+        - Authentication
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - email
+                - password
+              properties:
+                name:
+                  type: string
+                  example: "John Doe"
+                email:
+                  type: string
+                  format: email
+                  example: "john@example.com"
+                password:
+                  type: string
+                  minLength: 6
+                  example: "securepassword"
+                image_url:
+                  type: string
+                  nullable: true
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "User created successfully"
+                  token:
+                    type: string
+                    example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                  user:
+                    $ref: '#/components/schemas/User'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: Login user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: "john@example.com"
+                password:
+                  type: string
+                  example: "securepassword"
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Login successful"
+                  token:
+                    type: string
+                    example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                  user:
+                    $ref: '#/components/schemas/User'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/auth/profile:
+    get:
+      tags:
+        - Authentication
+      summary: Get user profile
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: User profile retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      tags:
+        - Authentication
+      summary: Update user profile
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: "John Smith"
+                email:
+                  type: string
+                  format: email
+                  example: "johnsmith@example.com"
+                image_url:
+                  type: string
+                  nullable: true
+      responses:
+        '200':
+          description: Profile updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Profile updated successfully"
+                  user:
+                    $ref: '#/components/schemas/User'
+
+  /api/auth/change-password:
+    post:
+      tags:
+        - Authentication
+      summary: Change user password
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - currentPassword
+                - newPassword
+              properties:
+                currentPassword:
+                  type: string
+                  example: "oldpassword"
+                newPassword:
+                  type: string
+                  minLength: 6
+                  example: "newsecurepassword"
+      responses:
+        '200':
+          description: Password changed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Password changed successfully"
+
+  /api/exercises:
+    get:
+      tags:
+        - Exercises
+      summary: Get all user exercises
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: muscle_group
+          in: query
+          description: Filter by muscle group
+          schema:
+            type: string
+            example: "Chest"
+      responses:
+        '200':
+          description: Exercises retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  exercises:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Exercise'
+    post:
+      tags:
+        - Exercises
+      summary: Create new exercise
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - name
+                - muscle_group
+              properties:
+                name:
+                  type: string
+                  example: "Bench Press"
+                description:
+                  type: string
+                  example: "Chest exercise"
+                muscle_group:
+                  type: string
+                  example: "Chest"
+                has_pulley:
+                  type: boolean
+                  default: false
+                is_unilateral:
+                  type: boolean
+                  default: false
+                bar_weight:
+                  type: integer
+                  enum: [6, 8, 10, 12, 20]
+                image:
+                  type: string
+                  format: binary
+      responses:
+        '201':
+          description: Exercise created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Exercise created successfully"
+                  exercise:
+                    $ref: '#/components/schemas/Exercise'
+
+  /api/exercises/{id}:
+    get:
+      tags:
+        - Exercises
+      summary: Get exercise by ID
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: Exercise retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  exercise:
+                    $ref: '#/components/schemas/Exercise'
+        '404':
+          description: Exercise not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      tags:
+        - Exercises
+      summary: Update exercise
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                muscle_group:
+                  type: string
+                has_pulley:
+                  type: boolean
+                is_unilateral:
+                  type: boolean
+                bar_weight:
+                  type: integer
+                  enum: [6, 8, 10, 12, 20]
+                image:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Exercise updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Exercise updated successfully"
+                  exercise:
+                    $ref: '#/components/schemas/Exercise'
+    delete:
+      tags:
+        - Exercises
+      summary: Delete exercise
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: Exercise deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Exercise deleted successfully"
+
+  /api/exercises/muscle-groups/list:
+    get:
+      tags:
+        - Exercises
+      summary: Get all muscle groups
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Muscle groups retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  muscle_groups:
+                    type: array
+                    items:
+                      type: string
+                    example: ["Chest", "Back", "Shoulders", "Legs"]
+
+  /api/workouts:
+    get:
+      tags:
+        - Workouts
+      summary: Get all user workouts
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Workouts retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  workouts:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Workout'
+    post:
+      tags:
+        - Workouts
+      summary: Create new workout
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+                  example: "Push Day"
+                description:
+                  type: string
+                  example: "Chest, shoulders and triceps"
+                image:
+                  type: string
+                  format: binary
+      responses:
+        '201':
+          description: Workout created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Workout created successfully"
+                  workout:
+                    $ref: '#/components/schemas/Workout'
+
+  /api/workouts/{id}:
+    get:
+      tags:
+        - Workouts
+      summary: Get workout with exercises
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: Workout retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  workout:
+                    $ref: '#/components/schemas/Workout'
+    put:
+      tags:
+        - Workouts
+      summary: Update workout
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                image:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Workout updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Workout updated successfully"
+                  workout:
+                    $ref: '#/components/schemas/Workout'
+    delete:
+      tags:
+        - Workouts
+      summary: Delete workout
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: Workout deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Workout deleted successfully"
+
+  /api/workouts/{id}/exercises:
+    post:
+      tags:
+        - Workouts
+      summary: Add exercise to workout
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - exercise_id
+                - sets
+                - number
+              properties:
+                exercise_id:
+                  type: integer
+                  example: 1
+                sets:
+                  type: integer
+                  example: 3
+                number:
+                  type: integer
+                  example: 1
+      responses:
+        '201':
+          description: Exercise added to workout successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Exercise added to workout successfully"
+                  workout_exercise:
+                    $ref: '#/components/schemas/WorkoutExercise'
+
+  /api/workouts/{workoutId}/exercises/{exerciseId}:
+    delete:
+      tags:
+        - Workouts
+      summary: Remove exercise from workout
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: workoutId
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+        - name: exerciseId
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: Exercise removed from workout successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Exercise removed from workout successfully"
+
+  /api/workouts/{workoutId}/exercises/{exerciseId}/order:
+    put:
+      tags:
+        - Workouts
+      summary: Update exercise order in workout
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: workoutId
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+        - name: exerciseId
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - number
+              properties:
+                number:
+                  type: integer
+                  example: 2
+      responses:
+        '200':
+          description: Exercise order updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Exercise order updated successfully"
+                  workout_exercise:
+                    $ref: '#/components/schemas/WorkoutExercise'
+
+  /api/routines:
+    get:
+      tags:
+        - Routines
+      summary: Get all user routines
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Routines retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  routines:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Routine'
+    post:
+      tags:
+        - Routines
+      summary: Create new routine
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+                  example: "PPL Split"
+                description:
+                  type: string
+                  example: "Push Pull Legs routine"
+                image:
+                  type: string
+                  format: binary
+      responses:
+        '201':
+          description: Routine created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Routine created successfully"
+                  routine:
+                    $ref: '#/components/schemas/Routine'
+
+  /api/routines/{id}:
+    get:
+      tags:
+        - Routines
+      summary: Get routine with workouts
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: Routine retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  routine:
+                    $ref: '#/components/schemas/Routine'
+    put:
+      tags:
+        - Routines
+      summary: Update routine
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                image:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Routine updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Routine updated successfully"
+                  routine:
+                    $ref: '#/components/schemas/Routine'
+    delete:
+      tags:
+        - Routines
+      summary: Delete routine
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: Routine deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Routine deleted successfully"
+
+  /api/routines/{id}/workouts:
+    post:
+      tags:
+        - Routines
+      summary: Add workout to routine
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - workout_id
+                - number
+              properties:
+                workout_id:
+                  type: integer
+                  example: 1
+                number:
+                  type: integer
+                  example: 1
+      responses:
+        '201':
+          description: Workout added to routine successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Workout added to routine successfully"
+                  routine_workout:
+                    $ref: '#/components/schemas/RoutineWorkout'
+
+  /api/routines/{routineId}/workouts/{workoutId}:
+    delete:
+      tags:
+        - Routines
+      summary: Remove workout from routine
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: routineId
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+        - name: workoutId
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: Workout removed from routine successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Workout removed from routine successfully"
+
+  /api/routines/{routineId}/workouts/{workoutId}/order:
+    put:
+      tags:
+        - Routines
+      summary: Update workout order in routine
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: routineId
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+        - name: workoutId
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - number
+              properties:
+                number:
+                  type: integer
+                  example: 2
+      responses:
+        '200':
+          description: Workout order updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Workout order updated successfully"
+                  routine_workout:
+                    $ref: '#/components/schemas/RoutineWorkout'
+
+  /api/workout-sessions:
+    get:
+      tags:
+        - Workout Sessions
+      summary: Get user workout sessions
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          description: Number of sessions to return
+          schema:
+            type: integer
+            default: 20
+            example: 10
+        - name: offset
+          in: query
+          description: Number of sessions to skip
+          schema:
+            type: integer
+            default: 0
+            example: 0
+      responses:
+        '200':
+          description: Workout sessions retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sessions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/WorkoutSession'
+    post:
+      tags:
+        - Workout Sessions
+      summary: Start new workout session
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - workout_id
+              properties:
+                workout_id:
+                  type: integer
+                  example: 1
+                notes:
+                  type: string
+                  example: "Morning workout"
+      responses:
+        '201':
+          description: Workout session started successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Workout session started successfully"
+                  session:
+                    $ref: '#/components/schemas/WorkoutSession'
+
+  /api/workout-sessions/{id}:
+    get:
+      tags:
+        - Workout Sessions
+      summary: Get session with exercises and sets
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: Workout session retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  session:
+                    $ref: '#/components/schemas/WorkoutSession'
+    put:
+      tags:
+        - Workout Sessions
+      summary: Update workout session
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                notes:
+                  type: string
+                  example: "Updated notes"
+                end_time:
+                  type: string
+                  format: date-time
+      responses:
+        '200':
+          description: Workout session updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Workout session updated successfully"
+                  session:
+                    $ref: '#/components/schemas/WorkoutSession'
+
+  /api/workout-sessions/{id}/end:
+    post:
+      tags:
+        - Workout Sessions
+      summary: End workout session
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: Workout session ended successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Workout session ended successfully"
+                  session:
+                    $ref: '#/components/schemas/WorkoutSession'
+
+  /api/workout-sessions/{id}/exercises:
+    post:
+      tags:
+        - Workout Sessions
+      summary: Add exercise to session
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - exercise_id
+                - number
+              properties:
+                exercise_id:
+                  type: integer
+                  example: 1
+                number:
+                  type: integer
+                  example: 1
+                observations:
+                  type: string
+                  example: "Felt heavy today"
+      responses:
+        '201':
+          description: Exercise added to workout session successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Exercise added to workout session successfully"
+                  session_exercise:
+                    $ref: '#/components/schemas/SessionExercise'
+
+  /api/workout-sessions/{id}/sets:
+    post:
+      tags:
+        - Workout Sessions
+      summary: Add set to session
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - exercise_id
+                - number_of_set
+                - sets
+                - weight
+                - reps
+              properties:
+                exercise_id:
+                  type: integer
+                  example: 1
+                number_of_set:
+                  type: integer
+                  example: 1
+                sets:
+                  type: integer
+                  example: 1
+                series_type:
+                  type: integer
+                  enum: [0, 1, 2, 3]
+                  default: 0
+                  example: 2
+                  description: "0: Warm-up, 1: Preparatory, 2: Working set, 3: Back off set"
+                weight:
+                  type: integer
+                  example: 80
+                reps:
+                  type: integer
+                  example: 10
+      responses:
+        '201':
+          description: Set added to workout session successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Set added to workout session successfully"
+                  session_set:
+                    $ref: '#/components/schemas/SessionSet'
+
+  /api/workout-sessions/sets/{setId}:
+    put:
+      tags:
+        - Workout Sessions
+      summary: Update set in session
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: setId
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                weight:
+                  type: integer
+                  example: 85
+                reps:
+                  type: integer
+                  example: 8
+                series_type:
+                  type: integer
+                  enum: [0, 1, 2, 3]
+                  example: 2
+                done:
+                  type: boolean
+                  example: true
+      responses:
+        '200':
+          description: Set updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Set updated successfully"
+                  session_set:
+                    $ref: '#/components/schemas/SessionSet'
+
+  /api/workout-sessions/progress/{exerciseId}:
+    get:
+      tags:
+        - Workout Sessions
+      summary: Get exercise progress
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: exerciseId
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+        - name: limit
+          in: query
+          description: Number of records to return
+          schema:
+            type: integer
+            default: 10
+            example: 20
+      responses:
+        '200':
+          description: Exercise progress retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  progress:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        weight:
+                          type: integer
+                        reps:
+                          type: integer
+                        series_type:
+                          type: integer
+                        start_time:
+                          type: string
+                          format: date-time
+
+  /api/workout-sessions/calendar/{year}/{month}:
+    get:
+      tags:
+        - Workout Sessions
+      summary: Get calendar data
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: year
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 2024
+        - name: month
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 12
+            example: 3
+      responses:
+        '200':
+          description: Calendar data retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  calendar_data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        workout_date:
+                          type: string
+                          format: date
+                        sessions_count:
+                          type: integer
+
+  /api/statistics/dashboard:
+    get:
+      tags:
+        - Statistics
+      summary: Get dashboard statistics
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Dashboard statistics retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statistics:
+                    $ref: '#/components/schemas/Statistics'
+
+  /api/statistics/exercise-progress/{exerciseId}:
+    get:
+      tags:
+        - Statistics
+      summary: Get exercise progress statistics
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: exerciseId
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+        - name: limit
+          in: query
+          description: Number of records to return
+          schema:
+            type: integer
+            default: 20
+            example: 50
+      responses:
+        '200':
+          description: Exercise progress statistics retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  progress_stats:
+                    type: object
+                    properties:
+                      exercise:
+                        $ref: '#/components/schemas/Exercise'
+                      progress_data:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            weight:
+                              type: integer
+                            reps:
+                              type: integer
+                            series_type:
+                              type: integer
+                            workout_date:
+                              type: string
+                              format: date
+                            workout_name:
+                              type: string
+                            estimated_1rm:
+                              type: integer
+                      best_weight:
+                        type: integer
+                      best_reps:
+                        type: integer
+                      best_estimated_1rm:
+                        type: integer
+                      total_volume:
+                        type: integer
+                      total_sessions:
+                        type: integer
+
+  /api/statistics/monthly-summary/{year}/{month}:
+    get:
+      tags:
+        - Statistics
+      summary: Get monthly workout summary
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: year
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 2024
+        - name: month
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 12
+            example: 3
+      responses:
+        '200':
+          description: Monthly summary retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  monthly_summary:
+                    type: object
+                    properties:
+                      year:
+                        type: integer
+                      month:
+                        type: integer
+                      total_workouts:
+                        type: integer
+                      total_volume:
+                        type: integer
+                      daily_breakdown:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            date:
+                              type: string
+                              format: date
+                            sessions_count:
+                              type: integer
+                            volume:
+                              type: integer
+                            avg_duration_minutes:
+                              type: number
+                              format: float
+
+tags:
+  - name: Authentication
+    description: User authentication and profile management
+  - name: Exercises
+    description: Exercise management operations
+  - name: Workouts
+    description: Workout management operations
+  - name: Routines
+    description: Routine management operations
+  - name: Workout Sessions
+    description: Workout session tracking and management
+  - name: Statistics
+    description: Statistics and progress tracking
