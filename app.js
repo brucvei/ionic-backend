@@ -90,7 +90,7 @@ app.get('/debug/db', async (req, res) => {
 	try {
 		console.log('🔍 Testing database connection...');
 
-		const pool = require('/config/database');
+		const pool = require('./config/database');
 		const client = await pool.connect();
 
 		// Test simple query
@@ -138,18 +138,20 @@ app.use(function (req, res, next) {
 		url: req.url,
 		origin: req.get('origin')
 	});
-
-	if (req.path.startsWith('/api/')) {
+	// For API-like routes, return JSON
+	if (req.path.startsWith('/auth') || req.path.startsWith('/exercises') ||
+		req.path.startsWith('/workouts') || req.path.startsWith('/routines') ||
+		req.path.startsWith('/workout-sessions') || req.path.startsWith('/statistics')) {
 		return res.status(404).json({
-			error: 'API endpoint not found',
+			error: 'Endpoint not found',
 			method: req.method,
 			path: req.path,
 			available_endpoints: {
 				health: '/health',
 				corsTest: '/cors-test',
-				auth: '/api/auth/*',
-				exercises: '/api/exercises/*',
-				workouts: '/api/workouts/*'
+				auth: '/auth/*',
+				exercises: '/exercises/*',
+				workouts: '/workouts/*'
 			}
 		});
 	}
@@ -169,7 +171,10 @@ app.use(function (err, req, res, next) {
 		return res.status(400).json({error: 'Only image files are allowed!'});
 	}
 
-	if (req.path.startsWith('/api/')) {
+	// API-like error responses
+	if (req.path.startsWith('/auth') || req.path.startsWith('/exercises') ||
+		req.path.startsWith('/workouts') || req.path.startsWith('/routines') ||
+		req.path.startsWith('/workout-sessions') || req.path.startsWith('/statistics')) {
 		return res.status(err.status || 500).json({
 			error: err.message || 'Internal server error'
 		});
