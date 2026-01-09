@@ -1,30 +1,23 @@
-var createError = require('http-errors');
-var express = require('express');
-var path = require('path');
-var cookieParser = require('cookie-parser');
-var logger = require('morgan');
-var cors = require('cors');
+const createError = require('http-errors');
+const express = require('express');
+const path = require('path');
+const cookieParser = require('cookie-parser');
+const logger = require('morgan');
+const cors = require('cors');
 
-// Import CORS configuration
-// const { corsConfig } = require('./config/cors');
-// const corsDebugMiddleware = require('./middleware/corsDebug');
+const indexRouter = require('./routes/index');
+const authRouter = require('./routes/auth');
+const exercisesRouter = require('./routes/exercises');
+const workoutsRouter = require('./routes/workouts');
+const routinesRouter = require('./routes/routines');
+const workoutSessionsRouter = require('./routes/workout-sessions');
+const statisticsRouter = require('./routes/statistics');
 
-var indexRouter = require('./routes/index');
-var usersRouter = require('./routes/users');
-var authRouter = require('./routes/auth');
-var exercisesRouter = require('./routes/exercises');
-var workoutsRouter = require('./routes/workouts');
-var routinesRouter = require('./routes/routines');
-var workoutSessionsRouter = require('./routes/workout-sessions');
-var statisticsRouter = require('./routes/statistics');
+const app = express();
 
-var app = express();
-
-// view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'pug');
 
-// Configure CORS to allow ALL origins (simplified for debugging)
 app.use(cors({
   origin: true, // Allow all origins
   credentials: true,
@@ -32,10 +25,6 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin']
 }));
 
-// Remove duplicate middleware
-// app.use(corsDebugMiddleware);
-
-// Debug middleware to log ALL requests
 app.use((req, res, next) => {
   console.log(`📥 ${req.method} ${req.url}`, {
     origin: req.get('origin'),
@@ -98,41 +87,14 @@ app.get('/cors-test', (req, res) => {
   });
 });
 
-// Debug endpoint to show all routes
-app.get('/debug-routes', (req, res) => {
-  res.json({
-    message: 'Available routes debug info',
-    routes: {
-      system: ['/health', '/cors-test', '/debug-routes', '/test'],
-      api: ['/api/auth/*', '/api/exercises/*', '/api/workouts/*', '/api/routines/*', '/api/workout-sessions/*', '/api/statistics/*'],
-      generic: ['/', '/users/*']
-    },
-    timestamp: new Date().toISOString()
-  });
-});
+app.use('/auth', authRouter);
+app.use('/exercises', exercisesRouter);
+app.use('/workouts', workoutsRouter);
+app.use('/routines', routinesRouter);
+app.use('/workout-sessions', workoutSessionsRouter);
+app.use('/statistics', statisticsRouter);
 
-// Simple test endpoint
-app.get('/test', (req, res) => {
-  console.log('✅ Simple test endpoint accessed:', req.url);
-  res.json({
-    message: 'Test endpoint working!',
-    timestamp: new Date().toISOString(),
-    method: req.method,
-    url: req.url
-  });
-});
-
-// API Routes (specific routes first)
-app.use('/api/auth', authRouter);
-app.use('/api/exercises', exercisesRouter);
-app.use('/api/workouts', workoutsRouter);
-app.use('/api/routines', routinesRouter);
-app.use('/api/workout-sessions', workoutSessionsRouter);
-app.use('/api/statistics', statisticsRouter);
-
-// Generic routes LAST (these catch everything else)
 app.use('/', indexRouter);
-app.use('/users', usersRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

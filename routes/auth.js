@@ -6,6 +6,16 @@ const { authenticateToken, JWT_SECRET } = require('../middleware/auth');
 
 const router = express.Router();
 
+router.get('/test', (req, res) => {
+  console.log('✅ Simple test endpoint accessed:', req.url);
+  res.json({
+    message: 'Test endpoint working!',
+    timestamp: new Date().toISOString(),
+    method: req.method,
+    url: req.url
+  });
+});
+
 // Register
 router.post('/register', async (req, res) => {
   try {
