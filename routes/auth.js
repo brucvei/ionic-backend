@@ -63,10 +63,21 @@ router.post('/register', async (req, res) => {
 				{expiresIn: '24h'}
 		);
 
+		// Gerar refresh token
+		const refreshToken = jwt.sign(
+				{userId: user.id},
+				JWT_SECRET,
+				{expiresIn: '30d'}
+		);
+
+		// Salvar refresh token no banco
+		await userModel.setRefreshToken(user.id, refreshToken);
+
 		console.log('✅ User registered successfully:', user.id);
 		res.status(201).json({
 			message: 'User created successfully',
 			token,
+			refreshToken,
 			user: {
 				id: user.id,
 				name: user.name,
@@ -130,9 +141,20 @@ router.post('/login', async (req, res) => {
 				{expiresIn: '24h'}
 		);
 
+		// Gerar refresh token
+		const refreshToken = jwt.sign(
+				{userId: user.id},
+				JWT_SECRET,
+				{expiresIn: '30d'}
+		);
+
+		// Salvar refresh token no banco
+		await userModel.setRefreshToken(user.id, refreshToken);
+
 		res.json({
 			message: 'Login successful',
 			token,
+			refreshToken,
 			user: {
 				id: user.id,
 				name: user.name,
@@ -214,6 +236,51 @@ router.post('/change-password', authenticateToken, async (req, res) => {
 	} catch (error) {
 		console.error('Change password error:', error);
 		res.status(500).json({error: 'Internal server error'});
+	}
+});
+
+// Refresh token
+router.post('/refresh', async (req, res) => {
+	try {
+		const { refreshToken } = req.body;
+
+		if (!refreshToken) {
+			return res.status(401).json({ error: 'Refresh token is required' });
+		}
+
+		// Verificar refresh token
+		const decoded = jwt.verify(refreshToken, JWT_SECRET);
+
+		// Verificar se o refresh token existe no banco
+		const user = await userModel.findByRefreshToken(refreshToken);
+		if (!user || user.id !== decoded.userId) {
+			return res.status(403).json({ error: 'Invalid refresh token' });
+		}
+
+		// Gerar novo access token
+		const newToken = jwt.sign(
+			{ userId: user.id, email: user.email },
+			JWT_SECRET,
+			{ expiresIn: '24h' }
+		);
+
+		res.json({
+			token: newToken
+		});
+	} catch (error) {
+		console.error('Refresh token error:', error);
+		res.status(403).json({ error: 'Invalid refresh token' });
+	}
+});
+
+// Logout
+router.post('/logout', authenticateToken, async (req, res) => {
+	try {
+		await userModel.clearRefreshToken(req.user.userId);
+		res.json({ message: 'Logged out successfully' });
+	} catch (error) {
+		console.error('Logout error:', error);
+		res.status(500).json({ error: 'Internal server error' });
 	}
 });
 

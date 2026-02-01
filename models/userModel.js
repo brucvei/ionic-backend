@@ -47,6 +47,19 @@ const userModel = {
   async delete(id) {
     const result = await pool.query('DELETE FROM users WHERE id = $1 RETURNING id', [id]);
     return result.rows[0];
+  },
+
+  async setRefreshToken(id, refreshToken) {
+    await pool.query('UPDATE users SET refresh_token = $1 WHERE id = $2', [refreshToken, id]);
+  },
+
+  async findByRefreshToken(refreshToken) {
+    const result = await pool.query('SELECT * FROM users WHERE refresh_token = $1', [refreshToken]);
+    return result.rows[0];
+  },
+
+  async clearRefreshToken(id) {
+    await pool.query('UPDATE users SET refresh_token = NULL WHERE id = $1', [id]);
   }
 };
 

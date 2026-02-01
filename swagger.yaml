@@ -400,7 +400,7 @@ paths:
                     format: date-time
                     example: "2024-01-09T10:30:00.000Z"
 
-  /api/auth/register:
+  /auth/register:
     post:
       tags:
         - Authentication
@@ -444,6 +444,9 @@ paths:
                   token:
                     type: string
                     example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                  refreshToken:
+                    type: string
+                    example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
                   user:
                     $ref: '#/components/schemas/User'
         '400':
@@ -453,7 +456,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /api/auth/login:
+  /auth/login:
     post:
       tags:
         - Authentication
@@ -489,6 +492,9 @@ paths:
                   token:
                     type: string
                     example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                  refreshToken:
+                    type: string
+                    example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
                   user:
                     $ref: '#/components/schemas/User'
         '401':
@@ -498,7 +504,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /api/auth/profile:
+  /auth/profile:
     get:
       tags:
         - Authentication
@@ -558,7 +564,7 @@ paths:
                   user:
                     $ref: '#/components/schemas/User'
 
-  /api/auth/change-password:
+  /auth/change-password:
     post:
       tags:
         - Authentication
@@ -594,7 +600,61 @@ paths:
                     type: string
                     example: "Password changed successfully"
 
-  /api/exercises:
+  /auth/refresh:
+    post:
+      tags:
+        - Authentication
+      summary: Refresh access token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - refreshToken
+              properties:
+                refreshToken:
+                  type: string
+                  example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+      responses:
+        '200':
+          description: Token refreshed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        '403':
+          description: Invalid refresh token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/logout:
+    post:
+      tags:
+        - Authentication
+      summary: Logout user
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Logged out successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Logged out successfully"
+
+  /exercises:
     get:
       tags:
         - Exercises
@@ -671,7 +731,7 @@ paths:
                   exercise:
                     $ref: '#/components/schemas/Exercise'
 
-  /api/exercises/{id}:
+  /exercises/{id}:
     get:
       tags:
         - Exercises
@@ -775,7 +835,7 @@ paths:
                     type: string
                     example: "Exercise deleted successfully"
 
-  /api/exercises/muscle-groups/list:
+  /exercises/muscle-groups/list:
     get:
       tags:
         - Exercises
@@ -796,7 +856,7 @@ paths:
                       type: string
                     example: ["Chest", "Back", "Shoulders", "Legs"]
 
-  /api/workouts:
+  /workouts:
     get:
       tags:
         - Workouts
@@ -853,7 +913,7 @@ paths:
                   workout:
                     $ref: '#/components/schemas/Workout'
 
-  /api/workouts/{id}:
+  /workouts/{id}:
     get:
       tags:
         - Workouts
@@ -942,7 +1002,7 @@ paths:
                     type: string
                     example: "Workout deleted successfully"
 
-  /api/workouts/{id}/exercises:
+  /workouts/{id}/exercises:
     post:
       tags:
         - Workouts
@@ -990,7 +1050,7 @@ paths:
                   workout_exercise:
                     $ref: '#/components/schemas/WorkoutExercise'
 
-  /api/workouts/{workoutId}/exercises/{exerciseId}:
+  /workouts/{workoutId}/exercises/{exerciseId}:
     delete:
       tags:
         - Workouts
@@ -1022,7 +1082,7 @@ paths:
                     type: string
                     example: "Exercise removed from workout successfully"
 
-  /api/workouts/{workoutId}/exercises/{exerciseId}/order:
+  /workouts/{workoutId}/exercises/{exerciseId}/order:
     put:
       tags:
         - Workouts
@@ -1068,7 +1128,7 @@ paths:
                   workout_exercise:
                     $ref: '#/components/schemas/WorkoutExercise'
 
-  /api/routines:
+  /routines:
     get:
       tags:
         - Routines
@@ -1125,7 +1185,7 @@ paths:
                   routine:
                     $ref: '#/components/schemas/Routine'
 
-  /api/routines/{id}:
+  /routines/{id}:
     get:
       tags:
         - Routines
@@ -1214,7 +1274,7 @@ paths:
                     type: string
                     example: "Routine deleted successfully"
 
-  /api/routines/{id}/workouts:
+  /routines/{id}/workouts:
     post:
       tags:
         - Routines
@@ -1258,7 +1318,7 @@ paths:
                   routine_workout:
                     $ref: '#/components/schemas/RoutineWorkout'
 
-  /api/routines/{routineId}/workouts/{workoutId}:
+  /routines/{routineId}/workouts/{workoutId}:
     delete:
       tags:
         - Routines
@@ -1290,7 +1350,7 @@ paths:
                     type: string
                     example: "Workout removed from routine successfully"
 
-  /api/routines/{routineId}/workouts/{workoutId}/order:
+  /routines/{routineId}/workouts/{workoutId}/order:
     put:
       tags:
         - Routines
@@ -1336,7 +1396,7 @@ paths:
                   routine_workout:
                     $ref: '#/components/schemas/RoutineWorkout'
 
-  /api/workout-sessions:
+  /workout-sessions:
     get:
       tags:
         - Workout Sessions
@@ -1405,7 +1465,7 @@ paths:
                   session:
                     $ref: '#/components/schemas/WorkoutSession'
 
-  /api/workout-sessions/{id}:
+  /workout-sessions/{id}:
     get:
       tags:
         - Workout Sessions
@@ -1469,7 +1529,7 @@ paths:
                   session:
                     $ref: '#/components/schemas/WorkoutSession'
 
-  /api/workout-sessions/{id}/end:
+  /workout-sessions/{id}/end:
     post:
       tags:
         - Workout Sessions
@@ -1497,7 +1557,7 @@ paths:
                   session:
                     $ref: '#/components/schemas/WorkoutSession'
 
-  /api/workout-sessions/{id}/exercises:
+  /workout-sessions/{id}/exercises:
     post:
       tags:
         - Workout Sessions
@@ -1544,7 +1604,7 @@ paths:
                   session_exercise:
                     $ref: '#/components/schemas/SessionExercise'
 
-  /api/workout-sessions/{id}/sets:
+  /workout-sessions/{id}/sets:
     post:
       tags:
         - Workout Sessions
@@ -1606,7 +1666,7 @@ paths:
                   session_set:
                     $ref: '#/components/schemas/SessionSet'
 
-  /api/workout-sessions/sets/{setId}:
+  /workout-sessions/sets/{setId}:
     put:
       tags:
         - Workout Sessions
@@ -1654,7 +1714,7 @@ paths:
                   session_set:
                     $ref: '#/components/schemas/SessionSet'
 
-  /api/workout-sessions/progress/{exerciseId}:
+  /workout-sessions/progress/{exerciseId}:
     get:
       tags:
         - Workout Sessions
@@ -1698,7 +1758,7 @@ paths:
                           type: string
                           format: date-time
 
-  /api/workout-sessions/calendar/{year}/{month}:
+  /workout-sessions/calendar/{year}/{month}:
     get:
       tags:
         - Workout Sessions
@@ -1739,7 +1799,7 @@ paths:
                         sessions_count:
                           type: integer
 
-  /api/statistics/dashboard:
+  /statistics/dashboard:
     get:
       tags:
         - Statistics
@@ -1757,7 +1817,7 @@ paths:
                   statistics:
                     $ref: '#/components/schemas/Statistics'
 
-  /api/statistics/exercise-progress/{exerciseId}:
+  /statistics/exercise-progress/{exerciseId}:
     get:
       tags:
         - Statistics
@@ -1820,7 +1880,7 @@ paths:
                       total_sessions:
                         type: integer
 
-  /api/statistics/monthly-summary/{year}/{month}:
+  /statistics/monthly-summary/{year}/{month}:
     get:
       tags:
         - Statistics
